@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+```
+
+#### 1.2 Handling missing data
+
+```{r}
+df <- read_csv('airline_tidy.csv', show_col_types = FALSE)
+```
+
+Знайдемо змінні, що мають відсоток (%) пропущених даних більший за нуль:
+
+```{r}
+df_nan <- colSums(is.na(df)) * 100 / nrow(df)
+df_nan <- df_nan[df_nan > 0]
+df_nan <- df_nan[order(df_nan)]
+df_nan
+```
+
+```{r}
+nrow(df) * df_nan / 100
+```
+
+Змінна *Arrival_Delay_in_Minutes* має 0.3 % пропущених даних. В цьому випадку маємо два шляхи обробки пропущених даних.
+
+1.  Заповнити N/A дані значеннями моди/медіани відповідного стовпця
+
+2.  Заповнити N/A дані значеннями зі змінної *Departure_Delay_in_Minutes*
+
+Щоб обрати правильний, спочатку знайдемо різницю (в хв.) між змінними *Arrival_Delay_in_Minutes* та *Departure_Delay_in_Minutes*, для цього створимо відповідну змінну *Delay_overtake*, яка міститиме цю різницю.
+
+```{r}
+df$Delay_overtake <- df$Departure_Delay_in_Minutes - df$Arrival_Delay_in_Minutes
+sort(table(df$Delay_overtake), decreasing = TRUE)[1:5]
+```
+
+Приблизно половина рейсів записаних в датасеті має різницю між *Arrival_Delay_in_Minutes* та *Departure_Delay_in_Minutes* в 0 хвилин.
+
+```{r}
+median(table(df$Arrival_Delay_in_Minutes))
+```
+
+В той же час, медіанне значення дорівнює 7 хвилинам, що при заповненні ним пропущених даних може створити не існуючі раніше залежності, що приведе до неправильних результатів аналізу
+Отже заповнимо пропущенні значення стовпця *Arrival_Delay_in_Minutes* відповідними значеннями з *Departure_Delay_in_Minutes*
+
+```{r}
+df$Arrival_Delay_in_Minutes <- ifelse(is.na(df$Arrival_Delay_in_Minutes), df$Departure_Delay_in_Minutes, df$Arrival_Delay_in_Minutes)
+df$Delay_overtake <- df$Arrival_Delay_in_Minutes - df$Departure_Delay_in_Minutes
+```
+
+Попередньо перевіримо деякі кореляції між змінними, щоб у випадку коефіцієнта кореляції рівному 1, видалити одну зі змінних, у зв'язку з мультиколінеарністю.
+
+```{r}
+print(cor(df$Arrival_Delay_in_Minutes, df$Departure_Delay_in_Minutes))
+```
+
+Перевіримо категорійні змінні на валідність (кожна змінна з опитування має 5-6 можливих варіантів відповідей)
+
+```{r}
+sapply(df, function(x) length(unique(x)))
+```
+
+Збережемо на даному моменті датасет, приведений до охайного вигляду та без пропущених значень:
+
+```{r}
+write.csv(df, "airline_missing.csv")
+```

@@ -1,0 +1,70 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+```
+
+```{r}
+test <- read_csv("airline_satisfaction.csv", show_col_types = FALSE)
+train <- read_csv("airline_satisfaction2.csv", show_col_types = FALSE)
+
+# concatenation test & train datasets
+df <- rbind(test, train)
+```
+
+Dataset overview
+
+```{r}
+head(df, 3)
+```
+
+```{r}
+# видаляємо непотрібний стовпець 'Unnamed: 0'
+df <- subset(df, select = - c(1))
+
+# призначимо 'user id' в якості індексу
+df <- df[order(df$id),]
+df <- df %>% column_to_rownames(., var = 'id')
+```
+
+```{r}
+dim(df)
+```
+
+```{r}
+str(df)
+```
+
+*деякі стовпці мають строковий тип замість числового*
+
+Перейменування стовпців та категорій:
+
+```{r}
+# замінимо пробіли на '_' для облегшення виклику функцій
+colnames(df) <- gsub(" ", "_", colnames(df))
+
+colnames(df)[colnames(df) == "satisfaction"] <- "Satisfaction"
+colnames(df)[colnames(df) == "Departure/Arrival_time_convenient"] <- "Time_convenient"
+df$Type_of_Travel <- ifelse(df$Type_of_Travel == "Business travel", "Business Travel", df$Type_of_Travel)
+df$Customer_Type <- ifelse(df$Customer_Type == "disloyal Customer", "Disloyal Customer", df$Customer_Type)
+```
+
+Змінимо тип змінної *Satisfaction* на числовий шляхом кодування категорій
+
+```{r}
+unique(df$Satisfaction)
+df$Satisfaction <- ifelse(df$Satisfaction == "neutral or dissatisfied", 0, 1)
+df$Satisfaction <- as.integer(df$Satisfaction)
+```
+
+```{r}
+write.csv(df, "airline_tidy.csv")
+```
