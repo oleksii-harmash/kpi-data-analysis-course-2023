@@ -1,1 +1,1 @@
-# data-analysis-course
+# Laboratory 1: EDA
