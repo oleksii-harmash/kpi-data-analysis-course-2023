@@ -198,5 +198,5 @@ df$Flight_Distance <- exp(df$Flight_Distance)
 Збережемо на даному моменті датасет, приведений до охайного вигляду та без пропущених значень.
 
 ```{r}
-write.csv(df, "airlane_outliers.csv")
+write.csv(df, "airline_outliers.csv")
 ```

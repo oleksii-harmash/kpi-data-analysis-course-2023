@@ -27,7 +27,7 @@ import_roboto_condensed()
 # [2. Exploratory Data Analysis]{.underline}
 
 ```{r}
-df <- read_csv('airlane_outliers.csv', show_col_types = FALSE)
+df <- read_csv('airline_outliers.csv', show_col_types = FALSE)
 colnames(df)[2] ="id"
 df <- subset(df, select = - c(1))
 ```

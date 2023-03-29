@@ -324,13 +324,13 @@ df$Flight_Distance <- exp(df$Flight_Distance)
 Збережемо на даному моменті датасет, приведений до охайного вигляду та без пропущених значень.
 
 ```{r}
-write.csv(df, "airlane_outliers.csv")
+write.csv(df, "airline_outliers.csv")
 ```
 
 # [2. Exploratory Data Analysis]{.underline}
 
 ```{r}
-df <- read_csv('airlane_outliers.csv', show_col_types = FALSE)
+df <- read_csv('airline_outliers.csv', show_col_types = FALSE)
 colnames(df)[2] ="id"
 df <- subset(df, select = - c(1))
 ```
