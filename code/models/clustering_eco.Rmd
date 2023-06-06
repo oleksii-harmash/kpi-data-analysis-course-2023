@@ -1,0 +1,62 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(lmtest)
+library(stargazer)
+library(car)
+library(GGally)
+library(multcomp)
+library(dplyr)
+library(fixest)
+library(latex2exp)
+library(kableExtra)
+library(modelsummary)
+library(sandwich)
+```
+
+```{r}
+setwd("..")
+df <- read_csv('airline.csv', show_col_types = FALSE)
+colnames(df)[colnames(df) == "On-board_service"] <- "On_board_service"
+```
+
+```{r}
+# Не значущі
+df$Flight_haul <- as.factor(df$Flight_haul)
+df$Cleanliness <- as.factor(df$Cleanliness)
+df$Inflight_entertainment <- as.factor(df$Inflight_entertainment)
+df$Food_and_drink <- as.factor(df$Food_and_drink)
+
+
+# значущі
+df$Age_group <- as.factor(df$Age_group)
+df$Checkin_service <- as.factor(df$Checkin_service)
+df$On_board_service <- as.factor(df$On_board_service)
+df$Seat_comfort <- as.factor(df$Seat_comfort)
+
+
+# більш значущі
+df$Inflight_service <- as.factor(df$Inflight_service)
+df$Online_boarding <- as.factor(df$Online_boarding)
+df$Ease_of_Online_booking <- as.factor(df$Ease_of_Online_booking)
+df$Inflight_wifi_service <- as.factor(df$Inflight_wifi_service)
+df$Baggage_handling <- as.factor(df$Baggage_handling)
+df$Time_convenient <- as.factor(df$Time_convenient)
+df$Leg_room_service <- as.factor(df$Leg_room_service)
+df$Gate_location <- as.factor(df$Gate_location)
+
+```
+
+```{r}
+print("_________________________________")
+model_clust <- feols(Satisfaction ~ Leg_room_service + Inflight_wifi_service * Seat_comfort + Food_and_drink + I(log(Age)) + I(log(Flight_Distance)) | Ease_of_Online_booking, data = df %>% filter(Class %in% c("Eco", "Eco Plus")))
+ci_clust <- coefci(model_clust)
+
+modelsummary(model_clust,
+             stars = TRUE,
+             output = "output_eco/clustering.html",
+             gof_omit = "^(?!Num.Obs.|R2 Adj.)")|>
+  kable_styling(font_size = 15)
+``

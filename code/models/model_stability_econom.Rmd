@@ -1,0 +1,174 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(lmtest)
+library(stargazer)
+library(car)
+library(GGally)
+library(multcomp)
+library(dplyr)
+library(fixest)
+library(latex2exp)
+library(kableExtra)
+library(modelsummary)
+library(sandwich)
+```
+
+```{r}
+setwd("..")
+df <- read_csv('airline.csv', show_col_types = FALSE)
+colnames(df)[colnames(df) == "On-board_service"] <- "On_board_service"
+```
+
+```{r}
+# Не значущі
+df$Flight_haul <- as.factor(df$Flight_haul)
+df$Cleanliness <- as.factor(df$Cleanliness)
+df$Inflight_entertainment <- as.factor(df$Inflight_entertainment)
+df$Food_and_drink <- as.factor(df$Food_and_drink)
+
+
+# значущі
+df$Age_group <- as.factor(df$Age_group)
+df$Checkin_service <- as.factor(df$Checkin_service)
+df$On_board_service <- as.factor(df$On_board_service)
+df$Seat_comfort <- as.factor(df$Seat_comfort)
+
+
+# більш значущі
+df$Inflight_service <- as.factor(df$Inflight_service)
+df$Online_boarding <- as.factor(df$Online_boarding)
+df$Ease_of_Online_booking <- as.factor(df$Ease_of_Online_booking)
+df$Inflight_wifi_service <- as.factor(df$Inflight_wifi_service)
+df$Baggage_handling <- as.factor(df$Baggage_handling)
+df$Time_convenient <- as.factor(df$Time_convenient)
+df$Leg_room_service <- as.factor(df$Leg_room_service)
+df$Gate_location <- as.factor(df$Gate_location)
+
+```
+
+```{r}
+basic_model <- glm(Satisfaction ~  Leg_room_service + Inflight_wifi_service + Seat_comfort, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+basic_model_hc1 <- coeftest(basic_model, vcov. = hccm(basic_model, type = "hc1"))
+ci <- coefci(basic_model)
+
+```
+
+```{r}
+model_main <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_main_hc1 <- coeftest(model_main, vcov. = hccm(model_main, type = "hc1"))
+ci_main <- coefci(model_main)
+```
+
+```{r}
+# Age
+model_2 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + Age, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_2_hc1 <- coeftest(model_2, vcov. = hccm(model_2, type = "hc1"))
+ci_2 <- coefci(model_2)
+
+```
+
+```{r}
+# wit Flight_Distance
+model_3 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + Flight_Distance, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_3_hc1 <- coeftest(model_3, vcov. = hccm(model_3, type = "hc1"))
+ci_3 <- coefci(model_3)
+```
+
+```{r}
+stargazer(basic_model, model_main, model_2, model_3,
+          type = "latex",
+          column.labels = c("1", "2", "3", "4"),
+          dep.var.caption = "",
+          se = list(basic_model_hc1[, 2], model_main_hc1[ , 2], model_2_hc1[ , 2], model_3_hc1[ , 2]),
+          omit.stat = c("rsq", "f", "ser"),
+          ci = TRUE, ci.custom = list(ci, ci_main, ci_2, ci_3),
+          no.space = TRUE,
+          font.size = "tiny",
+          out = "output_eco/model_mutable.html")
+```
+
+```{r}
+new_main_model <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + Age + Flight_Distance, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+new_main_model_hc1 <- coeftest(new_main_model, vcov. = hccm(new_main_model, type = "hc1"))
+ci_new_main <- coefci(new_main_model)
+```
+
+```{r}
+model_11 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + I(log(Age)) + Flight_Distance, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_11_hc1 <- coeftest(model_11, vcov. = hccm(model_11, type = "hc1"))
+ci_11 <- coefci(model_11)
+```
+
+```{r}
+model_12 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + Age + I(log(Flight_Distance)), data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_12_hc1 <- coeftest(model_12, vcov. = hccm(model_12, type = "hc1"))
+ci_12 <- coefci(model_12)
+```
+
+```{r}
+model_13 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + I(Age^2) + Flight_Distance, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_13_hc1 <- coeftest(model_13, vcov. = hccm(model_13, type = "hc1"))
+ci_13 <- coefci(model_13)
+```
+
+```{r}
+model_14 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + Age + I(Flight_Distance^2), data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_14_hc1 <- coeftest(model_14, vcov. = vcovHC(model_14, type = "HC1"))
+ci_14 <- coefci(model_14)
+```
+
+```{r}
+model_15 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + I(log(Age)) + I(log(Flight_Distance)), data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_15_hc1 <- coeftest(model_15, vcov. = vcovHC(model_15, type = "HC1"))
+ci_15 <- coefci(model_15)
+```
+
+```{r}
+model_16 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service * Seat_comfort + Age + Flight_Distance + Food_and_drink, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_16_hc1 <- coeftest(model_16, vcov. = vcovHC(model_16, type = "HC1"))
+ci_16 <- coefci(model_16)
+```
+
+```{r}
+model_17 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service + Seat_comfort + Food_and_drink + I(log(Age)) * I(log(Flight_Distance)), data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_17_hc1 <- coeftest(model_17, vcov. = vcovHC(model_17, type = "HC1"))
+ci_17 <- coefci(model_17)
+```
+
+```{r}
+model_18 <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service * Seat_comfort + Food_and_drink + I(log(Age)) * I(log(Flight_Distance)), data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_18_hc1 <- coeftest(model_18, vcov. = vcovHC(model_18, type = "HC1"))
+ci_18 <- coefci(model_18)
+```
+
+```{r}
+stargazer(new_main_model, model_11, model_12, model_13, model_14, model_15, model_16, model_17, model_18,
+    type = "latex",
+    column.labels = c("1", "2", "3", "4", "5", "6", "7", "8", "9"),
+    dep.var.caption = "",
+    se = list(new_main_model_hc1[, 2], model_11_hc1[, 2], model_12_hc1[, 2], model_13_hc1[, 2], model_14_hc1[, 2], model_15_hc1[, 2], model_16_hc1[, 2], model_17_hc1[ , 2], model_18_hc1[ , 2]),
+    omit.stat = c("rsq", "f", "ser"),
+    ci = TRUE, ci.custom = list(ci_new_main, ci_11, ci_12, ci_13, ci_14, ci_15, ci_16, ci_17, ci_18),
+    no.space = TRUE,
+    font.size = "tiny",
+    out = "output_eco/model_stability_test.html"
+)
+```
+
+```{r}
+new_modificated_main_model <- glm(Satisfaction ~ Leg_room_service + Inflight_wifi_service * Seat_comfort + Food_and_drink + I(log(Age)) * I(log(Flight_Distance)), data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+new_modificated_main_model_hc1 <- coeftest(new_modificated_main_model, vcov. = vcovHC(new_modificated_main_model, type = "HC1"))
+ci_new_modificated_main <- coefci(new_modificated_main_model)
+
+print("I(log(Age)) * I(log(Flight_Distance)) test:")
+m0 <- update(new_modificated_main_model, . ~. -I(log(Age) * I(log(Flight_Distance))))
+anova(m0, model_main, test = "Chisq")
+
+
+print("Inflight_wifi_service * Seat_comfort test:")
+m0 <- update(new_modificated_main_model, . ~. -Inflight_wifi_service * Seat_comfort)
+anova(m0, model_main, test = "Chisq")
+```

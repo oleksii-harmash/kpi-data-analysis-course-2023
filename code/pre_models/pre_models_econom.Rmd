@@ -1,0 +1,183 @@
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(lmtest)
+library(stargazer)
+library(car)
+library(GGally)
+library(multcomp)
+library(dplyr)
+library(fixest)
+library(latex2exp)
+library(kableExtra)
+library(modelsummary)
+```
+
+```{r}
+setwd("..")
+df <- read_csv('airline.csv', show_col_types = FALSE)
+colnames(df)[colnames(df) == "On-board_service"] <- "On_board_service"
+```
+
+```{r}
+# не значущі
+df$Flight_haul <- as.factor(df$Flight_haul)
+df$Cleanliness <- as.factor(df$Cleanliness)
+df$Inflight_entertainment <- as.factor(df$Inflight_entertainment)
+df$Food_and_drink <- as.factor(df$Food_and_drink)
+
+# малозначущі
+df$Age_group <- as.factor(df$Age_group)
+df$Checkin_service <- as.factor(df$Checkin_service)
+df$On_board_service <- as.factor(df$On_board_service)
+df$Seat_comfort <- as.factor(df$Seat_comfort)
+
+# значущі
+df$Inflight_service <- as.factor(df$Inflight_service)
+df$Online_boarding <- as.factor(df$Online_boarding)
+df$Ease_of_Online_booking <- as.factor(df$Ease_of_Online_booking)
+df$Inflight_wifi_service <- as.factor(df$Inflight_wifi_service)
+df$Baggage_handling <- as.factor(df$Baggage_handling)
+df$Time_convenient <- as.factor(df$Time_convenient)
+df$Leg_room_service <- as.factor(df$Leg_room_service)
+df$Gate_location <- as.factor(df$Gate_location)
+```
+
+```{r}
+# Flight_haul
+model_flight_haul <- glm(Satisfaction ~ Flight_haul, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_flight_haul_hc1 <- coeftest(model_flight_haul, vcov. = hccm(model_flight_haul, type = "hc1"))
+flight_haul_ci <- coefci(model_flight_haul)
+```
+
+```{r}
+# Cleanliness
+model_cleanliness <- glm(Satisfaction ~ Cleanliness, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_cleanliness_hc1 <- coeftest(model_cleanliness, vcov. = hccm(model_cleanliness, type = "hc1"))
+cleanliness_ci <- coefci(model_cleanliness)
+```
+
+```{r}
+# In-Flight_entertainment
+model_inflight_entertainment <- glm(Satisfaction ~ Inflight_entertainment, data = df %>% filter(Class %in% c("Eco", "Eco Plus")), family = binomial)
+model_inflight_entertainment_hc1 <- coeftest(model_inflight_entertainment, vcov. = hccm(model_inflight_entertainment, type = "hc1"))
+inflight_entertainment_ci <- coefci(model_inflight_entertainment)
+```
+
+```{r}
+# Food_and_drink
+model_food_and_drink <- glm(Satisfaction ~ Food_and_drink, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_food_and_drink_hc1 <- coeftest(model_food_and_drink, vcov. = hccm(model_food_and_drink, type = "hc1"))
+food_and_drink_ci <- coefci(model_food_and_drink)
+```
+
+```{r}
+# Age_group
+model_age_group <- glm(Satisfaction ~ Age_group, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_age_group_hc1 <- coeftest(model_age_group, vcov. = hccm(model_age_group, type = "hc1"))
+age_group_ci <- coefci(model_age_group)
+```
+
+```{r}
+# Checkin_service
+model_checkin_service <- glm(Satisfaction ~ Checkin_service, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_checkin_service_hc1 <- coeftest(model_checkin_service, vcov. = hccm(model_checkin_service, type = "hc1"))
+checkin_service_ci <- coefci(model_checkin_service)
+```
+
+```{r}
+# On_board_service
+model_on_board_service <- glm(Satisfaction ~ On_board_service, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_on_board_service_hc1 <- coeftest(model_on_board_service, vcov. = hccm(model_on_board_service, type = "hc1"))
+on_board_service_ci <- coefci(model_on_board_service)
+```
+
+```{r}
+# Seat_comfort
+model_seat_comfort <- glm(Satisfaction ~ Seat_comfort, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_seat_comfort_hc1 <- coeftest(model_seat_comfort, vcov. = hccm(model_seat_comfort, type = "hc1"))
+seat_comfort_ci <- coefci(model_seat_comfort)
+```
+
+```{r}
+# Inflight_service
+model_inflight_service <- glm(Satisfaction ~ Inflight_service, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_inflight_service_hc1 <- coeftest(model_inflight_service, vcov. = hccm(model_inflight_service, type = "hc1"))
+inflight_service_ci <- coefci(model_inflight_service)
+```
+
+```{r}
+# Online_boarding
+model_online_boarding <- glm(Satisfaction ~ Online_boarding, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_online_boarding_hc1 <- coeftest(model_online_boarding, vcov. = hccm(model_online_boarding, type = "hc1"))
+online_boarding_ci <- coefci(model_online_boarding)
+```
+
+```{r}
+# Ease_of_Online_booking
+model_ease_of_booking <- glm(Satisfaction ~ Ease_of_Online_booking, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_ease_of_booking_hc1 <- coeftest(model_ease_of_booking, vcov. = hccm(model_ease_of_booking, type = "hc1"))
+ease_of_booking_ci <- coefci(model_ease_of_booking)
+```
+
+```{r}
+# Inflight_wifi_service
+model_inflight_wifi <- glm(Satisfaction ~ Inflight_wifi_service, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_inflight_wifi_hc1 <- coeftest(model_inflight_wifi, vcov. = hccm(model_inflight_wifi, type = "hc1"))
+inflight_wifi_ci <- coefci(model_inflight_wifi)
+```
+
+```{r}
+# Baggage_handling
+model_baggage_handling <- glm(Satisfaction ~ Baggage_handling, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_baggage_handling_hc1 <- coeftest(model_baggage_handling, vcov. = hccm(model_baggage_handling, type = "hc1"))
+baggage_handling_ci <- coefci(model_baggage_handling)
+```
+
+```{r}
+# Time_convenient
+model_time_convenient <- glm(Satisfaction ~ Time_convenient, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_time_convenient_hc1 <- coeftest(model_time_convenient, vcov. = hccm(model_time_convenient, type = "hc1"))
+time_convenient_ci <- coefci(model_time_convenient)
+```
+
+```{r}
+# Leg_room_service
+model_leg_room_service <- glm(Satisfaction ~ Leg_room_service, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_leg_room_service_hc1 <- coeftest(model_leg_room_service, vcov. = hccm(model_leg_room_service, type = "hc1"))
+leg_room_service_ci <- coefci(model_leg_room_service)
+```
+
+```{r}
+# Gate_location
+model_gate_location <- glm(Satisfaction ~ Gate_location, data = df %>% filter(Class %in% c("Eco", "Eco Pluse")), family = binomial)
+model_gate_location_hc1 <- coeftest(model_gate_location, vcov. = hccm(model_gate_location, type = "hc1"))
+gate_location_ci <- coefci(model_gate_location)
+```
+
+```{r}
+stargazer(model_flight_haul, model_cleanliness, model_inflight_entertainment, model_food_and_drink, 
+          model_age_group, model_checkin_service, model_on_board_service, model_seat_comfort, model_inflight_service,
+          model_online_boarding, model_ease_of_booking, model_inflight_wifi, model_baggage_handling, model_time_convenient, 
+          model_leg_room_service, model_gate_location,
+          type = "latex",
+          column.labels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"),
+          dep.var.caption = "",
+          se = list(model_flight_haul_hc1[, 2], model_cleanliness_hc1[, 2], model_inflight_entertainment_hc1[, 2], model_food_and_drink_hc1[, 2],
+                    model_age_group_hc1[, 2], model_checkin_service_hc1[, 2], model_on_board_service_hc1[, 2], model_seat_comfort_hc1[, 2], 
+                    model_inflight_service_hc1[, 2], model_online_boarding_hc1[, 2], model_ease_of_booking_hc1[, 2], 
+                    model_inflight_wifi_hc1[, 2], model_baggage_handling_hc1[, 2], model_time_convenient_hc1[, 2],
+                    model_leg_room_service_hc1[, 2], model_gate_location_hc1[, 2]),
+          omit.stat = c("rsq", "f", "ser"),
+          ci = TRUE, ci.custom = list(flight_haul_ci, cleanliness_ci, inflight_entertainment_ci, food_and_drink_ci,
+                                      age_group_ci, checkin_service_ci, on_board_service_ci, seat_comfort_ci,
+                                      inflight_service_ci, online_boarding_ci, ease_of_booking_ci,
+                                      inflight_wifi_ci, baggage_handling_ci, time_convenient_ci,
+                                      leg_room_service_ci, gate_location_ci),
+          no.space = TRUE,
+          font.size = "tiny",
+          out = "output/pre_models_econom.html")
+```
