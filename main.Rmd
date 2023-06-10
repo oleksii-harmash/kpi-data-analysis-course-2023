@@ -1,0 +1,129 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(GGally)
+library(latex2exp)
+library(kableExtra)
+library(modelsummary)
+library("np")
+library("FactoMineR")
+library(factoextra)
+library(knitr)
+library(ggfortify)
+library(data.table)
+library(corrplot)
+library(hornpa)
+library(skimr)
+library("gridExtra")
+```
+
+```{r}
+theme_set(theme_bw())
+df <- read_csv('airline.csv', show_col_types = FALSE)
+df_business = df %>% filter(Class %in% c("Business"))
+df_eco = df %>% filter(Class %in% c("Eco", 'Eco plus'))
+
+df_business <- df_business %>%
+  dplyr::select(c(Online_boarding, Ease_of_Online_booking, Inflight_service, Seat_comfort, Inflight_wifi_service, Time_convenient, Gate_location, Food_and_drink, Inflight_entertainment, "On-board_service", Leg_room_service, Baggage_handling, Checkin_service, Cleanliness))
+
+df_eco <- df_eco %>%
+  dplyr::select(c(Online_boarding, Ease_of_Online_booking, Inflight_service, Seat_comfort, Inflight_wifi_service, Time_convenient, Gate_location, Food_and_drink, Inflight_entertainment, "On-board_service", Leg_room_service, Baggage_handling, Checkin_service, Cleanliness))
+```
+
+```{r}
+bartlett_test <- function(df){
+   R <- cor(df)
+   chi2 <- -((nrow(df) - 1)-((2 * ncol(df))+ 5)/ 6) * log(det(R)) # Xi^2
+   df <- (ncol(df) * (ncol(df) - 1)/ 2)
+   crit <- qchisq(.95, df) # critical value
+   p <- pchisq(chi2, df, lower.tail = F) # p-value
+   cat("Bartlett's test: Xi^2(",df,") = ", chi2,", p = ", round(p, 7), sep="" )   
+}
+```
+
+```{r}
+bartlett_test(df)
+```
+
+```{r}
+skimr::skim(df)
+```
+
+```{r, fig.width=10}
+df_pca_business <- PCA(df_business, graph = FALSE, ncp=Inf, scale.unit=TRUE)
+df_pca_eco <- PCA(df_eco, graph = FALSE, ncp=Inf, scale.unit=TRUE)
+
+
+fviz_eig(df_pca_business, choice = c("variance", "eigenvalue"), linecolor = "red", addlabels = TRUE, ggtheme = theme_bw(), ncp = Inf, barfill = '#DBFF3B', barcolor = 'black') +
+  ggtitle('BUSINESS CLASS')
+fviz_eig(df_pca_eco, choice = c("variance", "eigenvalue"), linecolor = "red", addlabels = TRUE, ggtheme = theme_bw(), ncp = Inf, barfill = '#3BFF4D', barcolor = 'black') + 
+  ggtitle('ECO CLASS')
+```
+```{r}
+summary(df_pca_business)
+cat('\n\n\n')
+summary(df_pca_eco)
+```
+
+```{r}
+e_business <- eigen(cor(df_business))
+e_eco <- eigen(cor(df_eco))
+```
+
+```{r}
+horn_business <- hornpa(k = ncol(df_business), size = nrow(df_business), reps = 300, seed = 42)
+horn_eco <- hornpa(k = ncol(df_eco), size = nrow(df_eco), reps = 300, seed = 42)
+```
+```{r}
+str(e_business$values)
+str(e_eco$values)
+```
+```{r, fig.width=10}
+var_business <- get_pca_var(df_pca_business)
+var_eco <- get_pca_var(df_pca_eco)
+corrplot(var_business$cos2, is.corr=FALSE, outline = TRUE)
+corrplot(var_eco$cos2, is.corr=FALSE, outline = TRUE)
+```
+```{r, fig.width=10}
+fviz_cos2(df_pca_business, choice = "var", axes = 1:2)
+fviz_cos2(df_pca_eco, choice = "var", axes = 1:2)
+```
+
+```{r, fig.width=14}
+#fviz_pca_var(df_pca_business , col.var = "cos2", gradient.cols =  c ('green', 'blue', 'red'), ggtheme = theme_minimal(), )
+
+fviz_pca_var(df_pca_eco , col.var = "cos2", gradient.cols =  c ('green', 'blue', 'red'), ggtheme = theme_minimal(), )
+ggsave('df1.png')
+```
+
+```{r, fig.width=10}
+pca_var_plot <- fviz_pca_var(df_pca_eco , col.var =  "contrib", gradient.cols =  c ('green', 'blue', 'red'), ggtheme = theme_minimal())
+pca_var_plot + ylim(0.0, 0.5) + xlim(-0.1, 0.25)
+```
+
+
+```{r, fig.width=11}
+a<-fviz_contrib(df_pca_business, choice = "var", axes = 1)
+b<-fviz_contrib(df_pca_business, choice = "var", axes = 2)
+a <- grid.arrange(a,b, ncol=2, top='Contribution of the variables to the first two PCs')
+```
+
+
+```{r, fig.width=11}
+a<-fviz_contrib(df_pca_eco, choice = "var", axes = 1)
+b<-fviz_contrib(df_pca_eco, choice = "var", axes = 2)
+grid.arrange(a,b, ncol=2, top='Contribution of the variables to the first two PCs')
+```
+
+
+
+
+
+
+
+
+
+
