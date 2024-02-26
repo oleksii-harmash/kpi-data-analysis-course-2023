@@ -1,0 +1,164 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(latex2exp)
+library(gridExtra)
+library(lmtest)
+library(stargazer)
+library(car)
+library(GGally)
+library(multcomp)
+library(dplyr)
+library(fixest)
+library(latex2exp)
+library(kableExtra)
+library(modelsummary)
+library(sandwich)
+```
+
+```{r}
+setwd("..")
+df <- read_csv('airline.csv', show_col_types = FALSE)
+colnames(df)[colnames(df) == "On-board_service"] <- "On_board_service"
+```
+
+```{r}
+# не значущі
+df$Cleanliness <- as.factor(df$Cleanliness)
+df$Inflight_service <- as.factor(df$Inflight_service)
+df$Checkin_service <- as.factor(df$Checkin_service)
+df$On_board_service <- as.factor(df$`On_board_service`)
+df$Inflight_entertainment <- as.factor(df$Inflight_entertainment)
+df$Seat_comfort <- as.factor(df$Seat_comfort)
+df$Food_and_drink <- as.factor(df$Food_and_drink)
+df$Inflight_wifi_service <- as.factor(df$Inflight_wifi_service)
+
+# малозначущі
+df$Age_group <- as.factor(df$Age_group)
+df$Flight_haul <- as.factor(df$Flight_haul)
+
+# значущі
+df$Baggage_handling <- as.factor(df$Baggage_handling)
+df$Leg_room_service <- as.factor(df$Leg_room_service)
+df$Online_boarding <- as.factor(df$Online_boarding)
+df$Ease_of_Online_booking <- as.factor(df$Ease_of_Online_booking)
+```
+
+```{r}
+basic_model <- glm(Satisfaction ~ Online_boarding + Ease_of_Online_booking, data = df %>% filter(Class %in% c("Business")), family = binomial)
+basic_model_hc1 <- coeftest(basic_model, vcov. = hccm(basic_model, type = "hc1"))
+
+ci <- coefci(basic_model)
+stargazer(basic_model, type = "latex",
+          title = "Business", label = "table:evals-reg-mult",
+          se = list(basic_model_hc1[, 2]),
+          omit.stat = c("rsq", "f", "ser"),
+          ci = TRUE, ci.custom = list(ci),
+          no.space = TRUE,
+          font.size = "tiny",
+          out = "output_business/model_basic.html")
+```
+
+```{r}
+try_model <- glm(Satisfaction ~ Inflight_service + On_board_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+try_model_hc1 <- coeftest(try_model, vcov. = hccm(try_model, type = "hc1"))
+
+ci <- coefci(try_model)
+stargazer(try_model, type = "latex",
+          title = "Business", label = "table:evals-reg-mult",
+          se = list(try_model_hc1[, 2]),
+          omit.stat = c("rsq", "f", "ser"),
+          ci = TRUE, ci.custom = list(ci),
+          no.space = TRUE,
+          font.size = "tiny",
+          out = "output_business/model_test.html")
+```
+
+```{r}
+mutble_model <- glm(Satisfaction ~ Online_boarding + Ease_of_Online_booking + Age_group + Flight_haul + Inflight_service + On_board_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+mutble_model_hc1 <- coeftest(mutble_model, vcov. = hccm(mutble_model, type = "hc1"))
+
+ci <- coefci(mutble_model)
+stargazer(mutble_model, type = "latex",
+          title = "Business", label = "table:evals-reg-mult",
+          se = list(mutble_model_hc1[, 2]),
+          omit.stat = c("rsq", "f", "ser"),
+          ci = TRUE, ci.custom = list(ci),
+          no.space = TRUE,
+          font.size = "tiny",
+          out = "output_business/model_mutable.html")
+```
+
+```{r}
+mutble_1 <- glm(Satisfaction ~ Ease_of_Online_booking + Age_group + Flight_haul + Inflight_service + On_board_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+mutble_1_hc1 <- coeftest(mutble_1, vcov. = hccm(mutble_1, type = "hc1"))
+ci_1 <- coefci(mutble_1)
+
+print("Online_boarding test:")
+m0 <- update(mutble_model, . ~. -Online_boarding)
+anova(m0, mutble_model, test = "Chisq")
+```
+
+```{r}
+mutble_2 <- glm(Satisfaction ~ Online_boarding  + Age_group + Flight_haul + Inflight_service + On_board_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+mutble_2_hc1 <- coeftest(mutble_2, vcov. = hccm(mutble_2, type = "hc1"))
+ci_2 <- coefci(mutble_2)
+
+print("Ease_of_Online_booking test:")
+m0 <- update(mutble_model, . ~. -Ease_of_Online_booking)
+anova(m0, mutble_model, test = "Chisq")
+```
+
+```{r}
+mutble_3 <- glm(Satisfaction ~ Online_boarding + Ease_of_Online_booking  + Flight_haul + Inflight_service + On_board_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+mutble_3_hc1 <- coeftest(mutble_3, vcov. = hccm(mutble_3, type = "hc1"))
+ci_3 <- coefci(mutble_3)
+
+print("Age_group test:")
+m0 <- update(mutble_model, . ~. -Age_group)
+anova(m0, mutble_model, test = "Chisq")
+```
+
+```{r}
+mutble_4 <- glm(Satisfaction ~ Online_boarding + Ease_of_Online_booking + Age_group  + Inflight_service + On_board_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+mutble_4_hc1 <- coeftest(mutble_4, vcov. = hccm(mutble_4, type = "hc1"))
+ci_4 <- coefci(mutble_4)
+
+print("Flight_haul test:")
+m0 <- update(mutble_model, . ~. -Flight_haul)
+anova(m0, mutble_model, test = "Chisq")
+```
+
+```{r}
+mutble_5 <- glm(Satisfaction ~ Online_boarding + Ease_of_Online_booking + Age_group + Flight_haul  + On_board_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+mutble_5_hc1 <- coeftest(mutble_5, vcov. = hccm(mutble_5, type = "hc1"))
+ci_5 <- coefci(mutble_5)
+
+print("Inflight_service test:")
+m0 <- update(mutble_model, . ~. -Inflight_service)
+anova(m0, mutble_model, test = "Chisq")
+```
+
+```{r}
+mutble_6 <- glm(Satisfaction ~ Online_boarding + Ease_of_Online_booking + Age_group + Flight_haul + Inflight_service, data = df %>% filter(Class %in% c("Business")), family = binomial)
+mutble_6_hc1 <- coeftest(mutble_6, vcov. = hccm(mutble_6, type = "hc1"))
+ci_6 <- coefci(mutble_6)
+
+print("On_board_service test:")
+m0 <- update(mutble_model, . ~. -On_board_service)
+anova(m0, mutble_model, test = "Chisq")
+```
+
+```{r}
+stargazer(mutble_model, mutble_1, mutble_2, mutble_3, mutble_4, mutble_5, mutble_6,
+          type = "latex",
+          column.labels = c("1", "2", "3", "4", "5", "6", "7"),
+          dep.var.caption = "",
+          se = list(mutble_model_hc1[, 2], mutble_1_hc1[, 2], mutble_2_hc1[, 2], mutble_3_hc1[, 2], mutble_4_hc1[, 2], mutble_5_hc1[, 2], mutble_6_hc1[, 2]),
+          omit.stat = c("rsq", "f", "ser"),
+          ci = TRUE, ci.custom = list(ci, ci_1, ci_2, ci_3, ci_4, ci_5, ci_6),
+          no.space = TRUE,
+          font.size = "tiny",
+          out="output_business/model_popping_test.html")
+```
