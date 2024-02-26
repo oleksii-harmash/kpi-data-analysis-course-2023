@@ -1,0 +1,202 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+library(wesanderson)
+library('viridis')
+library('plotly')
+library('ggridges')
+library('ggthemes')
+library('hrbrthemes')
+library('patchwork')
+library('GGally')
+library("lattice")
+library("ggpubr")
+import_roboto_condensed()
+```
+
+```{r}
+df <- read_csv('airline_missing.csv', show_col_types = FALSE)
+```
+
+Категорійні змінні представлені в даному датасеті фактично не мають можливості мати викиди. Тому проаналізуємо числові змінні.
+
+**Departure Delay in Minutes** **(Arrival Delay in Minutes)**
+
+```{r, fig.height=6, fig.width=12}
+ggplot(data = df, aes(x = Departure_Delay_in_Minutes)) +
+  geom_histogram(bins = 100, color = "#373737", fill='#53D46B', alpha=1) +
+  geom_rug(color = '#53D46B') + 
+  labs(x="Departure delay (min)", y="Num of passengers", title="Exponential distribution", subtitle="Most flights were without delays") + 
+  scale_x_continuous(breaks = seq(0, 1500, by = 250)) + 
+  theme_modern_rc() + 
+  theme(axis.title.y = element_text(hjust = 0.5, size=13, margin = margin(r=10)), 
+        axis.title.x = element_text(hjust = 0.5, margin = margin(r=15), size=13))
+```
+
+На гістограмі ми чітко бачимо що більшість рейсів мають затримку в 0 хвилин, але ці значення заважають побачити картину для рейсів, що мали затримку.\
+Крім того вісь *x* підказує, що є деякі значення (можливо викиди), що дуже звужують графік.\
+Очевидно розподіл нагадує експоненційний, тому для того, щоб побачити повноцінну картину цієї змінної - логаритмуємо її.
+
+*відомо що логаритм від нуля дорівнює нескінченності тому в нас є два варіанти - або відкинути значення рівні нулеві, або підняти вісь х на 1, виберемо другий*
+
+```{r, fig.height=6, fig.width=10}
+df$Departure_Delay_in_Minutes <- log(df$Departure_Delay_in_Minutes)
+ggplot(data = df) +
+  geom_histogram(aes(x = Departure_Delay_in_Minutes), color = "#373737", fill='#53D46B', binwidth = 0.3) +
+  labs(x="Departure delay log", y="Num of passengers log", title="Variable after logarithmization") + 
+  theme_modern_rc() + 
+  theme(plot.title = element_text(hjust = 0.5, size=15, face='italic'), 
+        axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=13), 
+        axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=13))
+```
+
+Дивлячись на графік логаритмованої змінної видно, що, незважаючи на нульові значення\
+*(ln(1) == 0)*, розподіл виглядає нормальним. Але значення що більше 0 та менше 1 псують картину і здається що вони є викидами.
+Перевіримо це застосувавши IQR метод для визначення викидів
+
+```{r}
+q <- quantile(df$Departure_Delay_in_Minutes[df$Departure_Delay_in_Minutes >= 0], c(0.25, 0.75))
+iqr <- IQR(df$Departure_Delay_in_Minutes[df$Departure_Delay_in_Minutes >= 0])
+lower_range <- q[1] - (1.5 * iqr)
+upper_range <- q[2] + (1.5 * iqr)
+```
+
+```{r}
+cat('Q1: ', round(q[1], 3), 'Q3: ', round(q[2], 3), '\n')
+cat('Lower range: ', round(lower_range, 3), 'Upper range: ', round(upper_range, 3))
+```
+
+Аналізуючи отримані величини границь зрозуміло що значень затримок рейсів менше за 0 немає, тому сенсу обрізати датасет вище нижньої межи теж не існує.\
+Проте верхня межа має значення 6.535. Всі значення що йдуть вище фактично псували нам початковий графік.\
+Подивимося кількість значень, що перевищують верхню межу:
+
+```{r}
+nrow(df %>% filter(Departure_Delay_in_Minutes > upper_range))
+```
+
+Значень, що перевищують верхню межу: 20. Хоча рейси і можуть затримуватися іноді на 26 годин, але таке відбувається дуже рідко.\
+Відносно величини датасету ця оцінка статистично незначуща, тому видалимо дані значення для коректності подальшого дослідження і повернемося до початкової системи координат.
+
+```{r}
+df[df$Departure_Delay_in_Minutes > upper_range,] <- NA
+df <- subset(df, Departure_Delay_in_Minutes <= upper_range)
+df$Departure_Delay_in_Minutes <- exp(df$Departure_Delay_in_Minutes)
+```
+
+```{r, fig.height=6, fig.width=10}
+ggplot(data = df) + # filter out missing values
+  geom_histogram(aes(x = Departure_Delay_in_Minutes), bins = 60, color = "#373737", fill='#53D46B') +
+  labs(x="Departure delay", y="Num of passengers", title="Distribution after removal of emissions") + 
+  scale_x_continuous(breaks = seq(0, 600, by = 100)) + 
+  theme_modern_rc() + 
+  theme(plot.title = element_text(hjust = 0.5, size=14, face='italic'), 
+        axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=12), 
+        axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=12))
+```
+
+**Age**
+
+```{r, fig.height=6, fig.width=10}
+ggplot(data = df %>% filter(!is.na(Age)), aes(x = Age)) +
+  geom_histogram(bins = 79, fill = "#53D46B", colour='#373737', alpha=1) +
+  scale_x_continuous(breaks = seq(0, 80, by = 10)) +
+  scale_y_continuous(breaks = seq(0, 4000, by = 500)) + 
+  labs(x="Age", y="Passengers", title="Approximately bimodal distribution") +
+  theme_modern_rc() + 
+  theme(plot.title = element_text(hjust = 0.5, size=14, face='italic'), 
+        axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=12), 
+        axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=12)) 
+```
+
+Гістограма розподілу віку пасажирів має характерний для цієї змінної приблизно нормальний розподіл.\
+Дослідження інших цікавих речей пов'язані з віком представлене у другому розділі - *EDA*.
+
+**Flight Distance**
+
+```{r, fig.height=6, fig.width=10}
+ggplot(data = df %>% filter(!is.na(Flight_Distance))) + # filter out missing values
+  geom_histogram(aes(x = Flight_Distance), bins = 80, fill = "#53D46B", colour='#373737') +
+  labs(x="Flight Distance", y="Passengers", title="Approximately bimodal distribution") +
+  scale_y_continuous(breaks = seq(0, 7000, by = 1000)) + 
+  theme_modern_rc() + 
+  theme(plot.title = element_text(hjust = 0.5, size=14, face='italic'), 
+        axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=12), 
+        axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=12)) 
+```
+
+За гістограмою розподілу бачимо, що більшість рейсів авіакомпанія проводить на відстань до 1 тис км, в то же час кількість рейсів від 1 до 4 тис км теж достатньо велика.\
+Це може свідчити про те, що компанія пропонує різні перельоти, як пасажирські так і бізнес(?).\
+Але присутні деякі значення, які виділяються на фоні інших (значення близько 5000 тис км.)
+
+За аналогією зі змінною *Departure Delay* застосуємо IQR метод:
+
+```{r}
+df$Flight_Distance <- log(df$Flight_Distance)
+```
+
+```{r, fig.width=13, fig.height=5}
+p1 <- ggplot(df %>% filter(!is.na(Flight_Distance)), aes(x = Flight_Distance)) +
+  geom_histogram(binwidth = 0.1, fill='#53D46B', colour='black') +
+  labs(x = 'Flight Distance', y = 'Count') +
+  theme_modern_rc() + 
+  theme(axis.title.y = element_text(hjust = 0.5, margin = margin(r = 10)), 
+        axis.title.x = element_text(hjust = 0.5, margin = margin(t=10))) 
+
+p2 <- ggplot(df %>% filter(!is.na(Flight_Distance)), aes(y = Flight_Distance)) +
+  geom_boxplot(size = 0.8, fill='white', colour='#8C99A2', outlier.colour = '#53D46B', outlier.size=3, ) +
+  labs(x = 'Flight Distance', y = '') +
+  theme_modern_rc() +
+  coord_flip() + 
+  theme(axis.title.y = element_text(hjust = 0.5, margin = margin(r = 10)), 
+        axis.title.x = element_text(hjust = 0.5, margin = margin(t=10))) 
+
+gridExtra::grid.arrange(p1, p2, ncol = 2, widths = c(2, 2))
+
+```
+
+```{r}
+Q <- quantile(df$Flight_Distance, c(0.25, 0.75), na.rm = TRUE)
+Q1 <- Q[1]
+Q3 <- Q[2]
+IQR <- Q3 - Q1
+lower_range <- Q1 - (1.5 * IQR)
+upper_range <- Q3 + (1.5 * IQR)
+```
+
+```{r}
+cat(paste('Q1: ', round(Q1, 3), 'Q3: ', round(Q3, 3), '\n'))
+cat(paste('Lower range: ', round(lower_range, 3), 'Upper range: ', round(upper_range, 3)))
+```
+
+За результатами IQR методу виявлено 11 викидів, кожний з яких менший за нижню границю.
+
+Давайте продивимося ці дані
+
+```{r}
+df[df$Flight_Distance < lower_range,][,]
+```
+
+Викиди мають однакове Flight_Distance у всіх 11 випадках, це свідчить що такий рейс реально був, але слід припустити, що відповідна відстань могла бути
+
+записана неправильно, бо *exp(3.433987)* приблизно дорівнює 30 км, а це дуже мало для рейсу пасажирського літака. Тому видалимо дані викиди.
+
+```{r}
+df <- subset(df, Flight_Distance >= lower_range)
+df$Flight_Distance <- exp(df$Flight_Distance)
+```
+
+Збережемо на даному моменті датасет, приведений до охайного вигляду та без пропущених значень.
+
+```{r}
+write.csv(df, "airline_outliers.csv")
+```
