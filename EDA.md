@@ -18,6 +18,7 @@ import_roboto_condensed()
 ```
 
 
+
 ```R
 test <- read_csv("airline_satisfaction.csv", show_col_types = FALSE)
 train <- read_csv("airline_satisfaction2.csv", show_col_types = FALSE)
@@ -36,6 +37,8 @@ Dataset overview
 
     head(df, 3)
 
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/83b3ce2f-0034-40a0-a8c4-d734560c10e8)
+
 #### 1.1 Data types & features
 
 ```{r}
@@ -50,10 +53,12 @@ df <- df %>% column_to_rownames(., var = 'id')
 ```{r}
 dim(df)
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/9b267786-6bb3-4bfd-a963-39e1e93c8dd6)
 
 ```{r}
 str(df)
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/5a95c356-fce5-43c8-851c-b89f9894ffae)
 
 *деякі стовпці мають строковий тип замість числового*
 
@@ -94,10 +99,12 @@ df_nan <- df_nan[df_nan > 0]
 df_nan <- df_nan[order(df_nan)]
 df_nan
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/a64f02b4-f2b7-4cad-9db2-e44d236d90fa)
 
 ```{r}
 nrow(df) * df_nan / 100
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/d72c70ef-a5c3-4329-b95c-0d7279a8cd14)
 
 Змінна *Arrival_Delay_in_Minutes* має 0.3 % пропущених даних. В цьому випадку маємо два шляхи обробки пропущених даних.
 
@@ -111,12 +118,14 @@ nrow(df) * df_nan / 100
 df$Delay_overtake <- df$Departure_Delay_in_Minutes - df$Arrival_Delay_in_Minutes
 sort(table(df$Delay_overtake), decreasing = TRUE)[1:5]
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/614704d2-0fbd-4f9b-bfd9-d651c36b01f1)
 
 Приблизно половина рейсів записаних в датасеті має різницю між *Arrival_Delay_in_Minutes* та *Departure_Delay_in_Minutes* в 0 хвилин.
 
 ```{r}
 median(table(df$Arrival_Delay_in_Minutes))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/75abc6af-3e9e-4ab5-a748-56039c53e930)
 
 В той же час, медіанне значення дорівнює 7 хвилинам, що при заповненні ним пропущених даних може створити не існуючі раніше залежності, що приведе до неправильних результатів аналізу
 Отже заповнимо пропущенні значення стовпця *Arrival_Delay_in_Minutes* відповідними значеннями з *Departure_Delay_in_Minutes*
@@ -131,12 +140,14 @@ df$Delay_overtake <- df$Arrival_Delay_in_Minutes - df$Departure_Delay_in_Minutes
 ```{r}
 print(cor(df$Arrival_Delay_in_Minutes, df$Departure_Delay_in_Minutes))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/533050d7-a448-45e5-8fa0-2d53de421cf0)
 
 Перевіримо категорійні змінні на валідність (кожна змінна з опитування має 5-6 можливих варіантів відповідей)
 
 ```{r}
 sapply(df, function(x) length(unique(x)))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/d3c6ce7b-ceb3-4d23-89bd-5155a47ab212)
 
 Збережемо на даному моменті датасет, приведений до охайного вигляду та без пропущених значень:
 
@@ -164,6 +175,7 @@ ggplot(data = df, aes(x = Departure_Delay_in_Minutes)) +
   theme(axis.title.y = element_text(hjust = 0.5, size=13, margin = margin(r=10)), 
         axis.title.x = element_text(hjust = 0.5, margin = margin(r=15), size=13))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/7b4c4a44-4a60-4fac-a2c3-409667df4654)
 
 На гістограмі ми чітко бачимо що більшість рейсів мають затримку в 0 хвилин, але ці значення заважають побачити картину для рейсів, що мали затримку.\
 Крім того вісь *x* підказує, що є деякі значення (можливо викиди), що дуже звужують графік.\
@@ -181,6 +193,7 @@ ggplot(data = df) +
         axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=13), 
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=13))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/6c92aadd-680d-469b-855a-e434e9c16dbc)
 
 Дивлячись на графік логаритмованої змінної видно, що, незважаючи на нульові значення\
 *(ln(1) == 0)*, розподіл виглядає нормальним. Але значення що більше 0 та менше 1 псують картину і здається що вони є викидами.
@@ -197,6 +210,7 @@ upper_range <- q[2] + (1.5 * iqr)
 cat('Q1: ', round(q[1], 3), 'Q3: ', round(q[2], 3), '\n')
 cat('Lower range: ', round(lower_range, 3), 'Upper range: ', round(upper_range, 3))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/2a08b236-45e7-4bd6-8b51-ecb0c14f3298)
 
 Аналізуючи отримані величини границь зрозуміло що значень затримок рейсів менше за 0 немає, тому сенсу обрізати датасет вище нижньої межи теж не існує.\
 Проте верхня межа має значення 6.535. Всі значення що йдуть вище фактично псували нам початковий графік.\
@@ -205,6 +219,7 @@ cat('Lower range: ', round(lower_range, 3), 'Upper range: ', round(upper_range, 
 ```{r}
 nrow(df %>% filter(Departure_Delay_in_Minutes > upper_range))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/2d382f17-9dcf-461c-b2d4-1b2a330a4ceb)
 
 Значень, що перевищують верхню межу: 20. Хоча рейси і можуть затримуватися іноді на 26 годин, але таке відбувається дуже рідко.\
 Відносно величини датасету ця оцінка статистично незначуща, тому видалимо дані значення для коректності подальшого дослідження і повернемося до початкової системи координат.
@@ -225,6 +240,7 @@ ggplot(data = df) + # filter out missing values
         axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=12), 
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=12))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/89c58e6e-cc2f-445e-b08f-69f67184c954)
 
 **Age**
 
@@ -239,6 +255,7 @@ ggplot(data = df %>% filter(!is.na(Age)), aes(x = Age)) +
         axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=12), 
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=12)) 
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/d5e90c33-ef53-47b7-98b2-c32e64b2f1e2)
 
 Гістограма розподілу віку пасажирів має характерний для цієї змінної приблизно нормальний розподіл.\
 Дослідження інших цікавих речей пов'язані з віком представлене у другому розділі - *EDA*.
@@ -255,6 +272,7 @@ ggplot(data = df %>% filter(!is.na(Flight_Distance))) + # filter out missing val
         axis.title.y = element_text(hjust = 0.5, margin = margin(r=10), size=12), 
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10), size=12)) 
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/3b99bd44-03d3-4c69-8ffd-4fedd06d689b)
 
 За гістограмою розподілу бачимо, що більшість рейсів авіакомпанія проводить на відстань до 1 тис км, в то же час кількість рейсів від 1 до 4 тис км теж достатньо велика.\
 Це може свідчити про те, що компанія пропонує різні перельоти, як пасажирські так і бізнес(?).\
@@ -283,8 +301,8 @@ p2 <- ggplot(df %>% filter(!is.na(Flight_Distance)), aes(y = Flight_Distance)) +
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10))) 
 
 gridExtra::grid.arrange(p1, p2, ncol = 2, widths = c(2, 2))
-
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/070cfa51-6843-4a65-9681-9ec3d94fa3aa)
 
 ```{r}
 Q <- quantile(df$Flight_Distance, c(0.25, 0.75), na.rm = TRUE)
@@ -299,6 +317,7 @@ upper_range <- Q3 + (1.5 * IQR)
 cat(paste('Q1: ', round(Q1, 3), 'Q3: ', round(Q3, 3), '\n'))
 cat(paste('Lower range: ', round(lower_range, 3), 'Upper range: ', round(upper_range, 3)))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/3a10527d-280b-4fca-b535-4acfbad50500)
 
 За результатами IQR методу виявлено 11 викидів, кожний з яких менший за нижню границю.
 
@@ -307,6 +326,7 @@ cat(paste('Lower range: ', round(lower_range, 3), 'Upper range: ', round(upper_r
 ```{r}
 df[df$Flight_Distance < lower_range,][,]
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/8a04a527-d10e-465a-9893-377fde0d9a60)
 
 Викиди мають однакове Flight_Distance у всіх 11 випадках, це свідчить що такий рейс реально був, але слід припустити, що відповідна відстань могла бути
 
@@ -334,6 +354,7 @@ df <- subset(df, select = - c(1))
 ```{r}
 t(summary(df[c('Age', 'Flight_Distance', 'Departure_Delay_in_Minutes', 'Arrival_Delay_in_Minutes', 'Delay_overtake')]))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/8b31c39d-d8b7-48f9-bc99-806677e7cbfb)
 
 Підійдемо до розвідкового аналізу з двох боків.
 
@@ -359,12 +380,14 @@ ggplot(df, aes(x = Satisfaction, fill = factor(Satisfaction))) +
         legend.text = element_text(size=11),
         axis.text.x=element_blank()) 
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/ffbb4ca0-3cbc-422e-8822-0d0b320da4f9)
 
 ```{r}
 cat(sprintf("Dissatisfied: %.2f%%\n", nrow(df[df$Satisfaction == 0,]) * 100 / nrow(df)))
 cat(sprintf("Satisfied: %.2f%%\n", nrow(df[df$Satisfaction == 1,]) * 100 / nrow(df)))
 cat(sprintf("Difference: %.f\n", round(nrow(df) * (0.565 - 0.434))))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/1231253b-f8dd-46ae-a22f-91817c4117ba)
 
 Кількість задоволених рейсом людей менша за незадоволених приблизно на 13 відсотків, що становить аж 17 тисяч людей, але попри те, дані, в силу розміру, фактично зашумлені.
 
@@ -388,12 +411,14 @@ ggplot(df, aes(x=Gender, fill=factor(Satisfaction))) +
         legend.title = element_text(size=12),
         legend.text = element_text(size=11))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/6d23591a-8995-45e2-8621-e3a1d09e62a3)
 
 За графіком можна побачити, що кількість жінок та чоловіків задоволених рейсом приблизно однакова, проте жінок, що залишилися незадоволеними рейсом дещо більше за чоловіків. На даному кроці висновки робити зарано, бо така різниця може бути пов'язана з тим, що кількість жінок, що пройшли опитування просто перевищує кількість чоловіків.
 
 ```{r}
 table(df$Gender)
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/9b0f7e82-f288-4758-b633-9a02c2e2b2b9)
 
 #### 2.2 Age
 
@@ -416,6 +441,8 @@ ggplot(df, aes(x=Age, fill=factor(Satisfaction))) +
         legend.title = element_text(size=12),
         legend.text = element_text(size=11))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/34c18a6c-9007-4eae-baf8-c4956aeb5a73)
+
 По графіку видно що частка задоволених пасажирів збільшується після умовної межі в 37 років
 
 Також пасажири в межах 18-60 років сумарно мають приблизно однаковий відсоток задоволеності/незадоволеності, в той час як пасажири \< 18 років та \> 60 років здебільшого незадоволені.
@@ -426,9 +453,12 @@ ggplot(df, aes(x=Age, fill=factor(Satisfaction))) +
 cat('Satisfied (18 < age < 60): ', sum(df$Satisfaction[df$Age > 18 & df$Age < 60] == 1), '\n')
 cat('Dissatisfied (18 < age < 60): ', sum(df$Satisfaction[df$Age > 18 & df$Age < 60] == 0), '\n')
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/1c1f5141-b68c-47c2-a3c0-5a72e1df88e4)
+
 ```{r}
 cat('Satisfied / amount of passengers: ', round(51163 * 100 / sum(df$Age > 18 & df$Age < 60), 2), '%', '\n')
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/9b313ab5-efcb-4dfd-82c1-d8db415c92bd)
 
 Візуальні висновки в першому випадку підтвердилися, пасажири від 18 до 60 років мають 48.01 % відсоток задоволеності
 
@@ -436,9 +466,12 @@ cat('Satisfied / amount of passengers: ', round(51163 * 100 / sum(df$Age > 18 & 
 cat('Satisfied (age < 18 & age > 60): ', sum(df$Satisfaction[df$Age <= 18 | df$Age >= 60] == 1), '\n')
 cat('Dissatisfied (age < 18 & age > 60): ', sum(df$Satisfaction[df$Age <= 18 | df$Age >= 60] == 0), '\n')
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/ae068ab3-f0ac-46c3-bb2a-a5cbf1e0f34e)
+
 ```{r}
 cat('Satisfied / amount of passengers: ', round(5256 * 100 / (18023 + 5256), 2), '%', '\n')
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/1018fd7f-539f-4f6b-adb3-00cf68ea9d45)
 
 **Висновок:**
 
@@ -473,6 +506,7 @@ ggplot(df, aes(fill = factor(Satisfaction), x = Age_group)) +
         legend.title = element_text(size=12),
         legend.text = element_text(size=11))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/e2e98d86-b817-40ef-941a-e0737ecaeb22)
 
 Подивимося на дизбаланс гендерних класів у всіх групових категоріях:
 
@@ -490,6 +524,7 @@ ggplot(df) +
         legend.title = element_text(size=12),
         legend.text = element_text(size=11))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/d43bf3b5-4064-4317-b611-6a26636f87be)
 
 Також за вище наведеним графіком сказати, що в якійсь конкретній віковий категорії присутній дизбаланс гендерних класів - не можна.
 
@@ -552,6 +587,8 @@ stat_summary(fun = "mean", geom = "bar", aes(fill=Age_group), color=FALSE) +
 
 fig1 + fig2 + fig3 + fig4
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/31534e12-eefb-4258-be60-d5631b6dbfbf)
+
 **Висновок:**
 
 1\. *Seat comfort*: Задоволеність даним фактором найбільша (3.5) у середньої вікової групи, трохи менша у людей похилого віку (3.4), це можна списати на вік та вплив інших факторів самопочуття, проте середня задоволеність дітей значно нижня (3), це **може** свідчити про те, що літаки не достатньо добре облаштовані зручними сидіннями для дітей.
@@ -573,6 +610,8 @@ ggplot(data=df %>% filter(Seat_comfort > 0), aes(x=Age, y=factor(Seat_comfort), 
         legend.title = element_text(size=12),
         legend.text = element_text(size=11))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/0df57a50-3144-434a-bc99-cf3bc120373c)
+
 За графіком чітко видно два умовних горби для кожного класу змінної Seat Comfort, проте кількість незадоволених (оцінка 1-3) від 20 до 30 років значно більша аніж кількість задоволених (оцінка 4-5).
 Також можна побачити як зміщується медіана в бік збільшення віку. Крім того, починаючи від 45 років, кількість частка задоволених помітно збільшується.
 
@@ -598,6 +637,7 @@ ggplot(df, aes(x = Flight_Distance, fill = factor(Satisfaction))) +
         legend.title = element_text(size=12),
         legend.text = element_text(size=11))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/4ba6061e-28ba-4c3e-a989-f4cf710d67f3)
 
 За графіком можна помітити що авіаперельоти можна поділити по дистанції на три категорії:
 
@@ -625,6 +665,7 @@ for (distance in flight_haul) {
   cat(paste('Satisfied / amount passenger of short haul flight: ', round(value_counts[2] / sum(value_counts), 2), '\n\n'))
 }
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/b1bd579f-a7c1-4387-9924-3fa7f7d291ba)
 
 Візуальні оцінки підтвердилися, ми можемо спостерігати що short-haul flights мають лише 34% задоволеності пасажирів на відміну від long-haul flights де цей показник становить 73%.\
 Це може означати націленість компанії на авіаперельоти окремої дистанції, тобто компанія більше приділяє уваги клієнтам та перельотам, що мають велику відстань.\
@@ -634,6 +675,7 @@ for (distance in flight_haul) {
 cat('Num of passenger short haul:', sum(df$Flight_haul == 'Short'), '\n')
 cat('Num of passengers medium + long haul:', sum(df$Flight_haul == 'Medium') + sum(df$Flight_haul == 'Long'), '\n')
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/0ec31470-aabd-487a-bb60-bdb80653e692)
 
 **Висновок:**
 
@@ -664,6 +706,7 @@ ggplot(df, aes(x = Flight_Distance, fill = factor(Satisfaction))) +
         legend.title = element_text(size=12),
         legend.text = element_text(size=11))
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/98afc42d-ad94-4e13-951d-abe6ae2a974a)
 
 ```{r, fig.height=5, fig.width=8}
 ggplot(df, aes(x=Type_of_Travel, fill=factor(Satisfaction))) +
@@ -682,6 +725,7 @@ ggplot(df, aes(x=Type_of_Travel, fill=factor(Satisfaction))) +
         legend.text = element_text(size=11))
 ggsave('eda_type.png')
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/4ba4a44d-f9fd-4b5a-8318-753b292b19e4)
 
 ```{r}
 # Calculate satisfaction percentage for personal type
@@ -700,6 +744,7 @@ cat("Personal type % of dissatisfaction:", personal_dissatisfaction_pct, "\n")
 cat("Business type % of satisfaction:", business_satisfaction_pct, "\n")
 cat("Business type % of satisfaction (medium and long flights):", business_long_satisfaction_pct, "\n")
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/d2c27f08-60fc-42c3-8629-fa410e445030)
 
 **Висновок:**
 
@@ -756,6 +801,9 @@ g2 + coord_polar()
 g3 + coord_polar()
 ggsave('eda_seat3.png')
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/f89ea125-5e43-41ca-b14f-0d17f8a94c79)
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/04e20a51-3b77-4f17-bb5f-8558c99d70d1)
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/0ca7039f-b182-46ee-8741-9f39b8eb8ccf)
 
 Досліджуючи питання комфортабельності сидінь треба слід досліджувати лише ту групу людей, яка залишилася незадоволеною рейсом, щоб визначити вплив комфортабельності сидінь та в подальшому зменшити кількість незадоволених.
 
@@ -770,6 +818,7 @@ for (distance in flight_haul) {
   cat(paste("Fraction of seat satisfaction on", distance, "-haul: ", satisfaction_fraction, "\n"))
 }
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/e3f651b9-00ca-4e60-9775-577fba039f56)
 
 Аналізуючи отримані результат, можна прийти до висновку, що чим більша відстань рейсу, тим менше оцінка комфорту сидіння. Тобто на невеликих відстанях навіть ті люди, що залишилися незадоволеними рейсом більше задоволені сидіннями, ніж люди, що подорожували великими відстанями на 10%.
 
@@ -788,6 +837,7 @@ for (distance in flight_haul) {
 ```{r}
 table(df$Class)
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/93b89e55-6034-4889-8801-79297e8a3546)
 
 Через те, що виділяється лише два великих класи Business та Eco, додамо ще до Eco клас Eco Plus, клієнтів якого лише 7%. Побудуємо відповідно для двох класів матрицю кореляцій, та подивимося кореляцію із цільовою змінною:
 
@@ -805,6 +855,7 @@ ggcorr((df %>% filter(Class == 'Business'))[c(-1)], method = c("everything", "pe
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10)), 
         axis.text.x=element_blank())
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/25ca0490-5066-4da2-a9f1-b2085ee47187)
 
 ```{r}
 business_corr <- data.frame(t(cor(df[df$Class == "Business", sapply(df, is.numeric)])["Satisfaction",]))
@@ -830,6 +881,7 @@ ggcorr((df %>% filter(Class == 'Eco' | Class == 'Eco Plus'))[c(-1)], method = c(
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10)), 
         axis.text.x=element_blank())
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/b844f7a7-f4c5-43a2-a5f4-3fc4b429ae97)
 
 ```{r}
 eco_corr <- data.frame(t(cor(df[df$Class == "Eco" | df$Class == "Eco Plus", sapply(df, is.numeric)])["Satisfaction",]))
@@ -860,3 +912,4 @@ ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) +
         axis.title.x = element_text(hjust = 0.5, margin = margin(t=10)),
         axis.text.x=element_blank())
 ```
+![image](https://github.com/oleksii-harmash/pet-data-analysis-R-2023/assets/72203364/9b0610c2-fd18-4c22-b081-3441aa3fe459)
